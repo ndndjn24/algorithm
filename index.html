@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>FH DECODER v3</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#050505">
+  
+  <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIkZIIERlY29kZXIiLAogICJzaG9ydF9uYW1lIjogIkZIIERlY29kZXIiLAogICJzdGFydF91cmwiOiAiLiIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiIzA1MDUwNSIsCiAgInRoZW1lX2NvbG9yIjogIiMwNTA1MDUiLAogICJpY29ucyI6IFtdCn0=">
+
+  <style>
+    :root {
+      --glass: rgba(255, 255, 255, 0.03);
+      --border: rgba(255, 255, 255, 0.1);
+      --bg-dark: #050505;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg-dark);
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      overflow: hidden;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    .liquid-bg {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 50% 50%, #111 0%, #050505 100%);
+      z-index: -1;
+    }
+
+    .container {
+      background: var(--glass);
+      backdrop-filter: blur(30px) saturate(150%);
+      -webkit-backdrop-filter: blur(30px) saturate(150%);
+      border: 1px solid var(--border);
+      padding: 50px 30px;
+      border-radius: 40px;
+      width: 85%;
+      max-width: 380px;
+      text-align: center;
+      box-shadow: 0 40px 100px rgba(0,0,0,0.8);
+      position: relative;
+    }
+
+    h2 {
+      font-weight: 200;
+      letter-spacing: 5px;
+      margin-bottom: 40px;
+      color: rgba(255,255,255,0.9);
+      font-size: 20px;
+    }
+
+    /* مؤشر حالة الأوفلاين */
+    .status-indicator {
+      position: absolute;
+      top: 20px;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      font-size: 10px;
+      letter-spacing: 1px;
+      color: #555;
+      font-weight: bold;
+    }
+    
+    .ready { color: #00ff88; text-shadow: 0 0 10px rgba(0,255,136,0.3); }
+
+    input {
+      width: 100%;
+      padding: 20px;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      color: white;
+      font-size: 16px;
+      outline: none;
+      transition: 0.3s;
+      box-sizing: border-box;
+      text-align: center;
+      -webkit-user-select: text;
+      user-select: text;
+    }
+
+    input:focus {
+      background: rgba(255,255,255,0.08);
+      border-color: rgba(255,255,255,0.3);
+    }
+
+    .action-btn {
+      width: 100%;
+      padding: 18px;
+      border-radius: 20px;
+      border: none;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: transform 0.1s, background 0.2s;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      outline: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .convert-btn {
+      margin-top: 30px;
+      background: #ffffff;
+      color: #000;
+    }
+
+    .convert-btn:active {
+      transform: scale(0.96);
+      background: #cccccc;
+    }
+
+    .copy-btn {
+      margin-top: 15px;
+      background: #252525;
+      color: #999;
+      display: none;
+    }
+
+    .copy-btn:active {
+      transform: scale(0.96);
+      background: #333;
+    }
+
+    #output {
+      margin-top: 40px;
+      font-size: 30px;
+      font-weight: 200;
+      color: #ffffff;
+      min-height: 40px;
+      letter-spacing: 1px;
+      word-break: break-all;
+    }
+
+    .watermark {
+      position: fixed;
+      bottom: 30px;
+      font-size: 9px;
+      color: rgba(255,255,255,0.2);
+      text-decoration: none;
+      letter-spacing: 2px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="liquid-bg"></div>
+
+  <div class="container">
+    <div id="statusText" class="status-indicator">LOADING v3...</div>
+    
+    <h2>FH DECODER</h2>
+    <input id="input" type="text" placeholder="WIFI NAME" autocomplete="off">
+    
+    <button class="action-btn convert-btn" onclick="run()">CONVERT</button>
+
+    <div id="output"></div>
+    
+    <button id="copyBtn" class="action-btn copy-btn" onclick="copyToClipboard()">TAP TO COPY</button>
+  </div>
+
+  <a href="https://www.instagram.com/alt.yxf" target="_blank" class="watermark">
+    YOUCEF DJEBBAR | v3 - STABLE
+  </a>
+
+  <script>
+    const map = {
+      "5":"a","4":"b","3":"c","2":"d","1":"e","0":"f",
+      "g":"z","h":"y","i":"x","j":"w","k":"v","l":"u",
+      "m":"t","n":"s","o":"r","p":"q","q":"p","r":"o",
+      "s":"n","t":"m","u":"l","f":"0",
+      "z":"g","y":"h","x":"i","w":"j","v":"k",
+      "e":"1","d":"2","c":"3","b":"4","a":"5",
+      "9":"6","8":"7","7":"8","6":"9"
+    };
+
+    function run() {
+      let inputField = document.getElementById("input");
+      let inputVal = inputField.value.trim().toLowerCase();
+      const output = document.getElementById("output");
+      const copyBtn = document.getElementById("copyBtn");
+
+      if (inputVal === "") return;
+
+      let result = "";
+      let remainingText = inputVal;
+
+      if (inputVal.startsWith("fh_")) {
+        result = "wlan";
+        remainingText = inputVal.substring(3);
+      }
+
+      for (let ch of remainingText) {
+        result += map[ch] ?? ch;
+      }
+
+      output.textContent = result;
+      copyBtn.style.display = "block";
+    }
+
+    function copyToClipboard() {
+      const text = document.getElementById("output").textContent;
+      const btn = document.getElementById("copyBtn");
+      
+      if (navigator.vibrate) navigator.vibrate(40);
+      
+      navigator.clipboard.writeText(text).then(() => {
+        btn.textContent = "COPIED ✅";
+        btn.style.color = "white";
+        setTimeout(() => { 
+          btn.textContent = "TAP TO COPY"; 
+          btn.style.color = "#999";
+        }, 2000);
+      });
+    }
+
+    // --- SERVICE WORKER v3 (Offline Logic) ---
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        const swBlob = new Blob([`
+          const CACHE_NAME = 'fh-decoder-v3';
+          
+          self.addEventListener('install', (event) => {
+            self.skipWaiting(); // فرض التثبيت فوراً
+            event.waitUntil(
+              caches.open(CACHE_NAME).then((cache) => {
+                // تخزين الصفحة الحالية مهما كان اسمها
+                return cache.add(new Request(self.location.href, {cache: 'reload'}));
+              })
+            );
+          });
+
+          self.addEventListener('activate', (event) => {
+            event.waitUntil(self.clients.claim()); // السيطرة الفورية
+          });
+
+          self.addEventListener('fetch', (event) => {
+            // استراتيجية: الشبكة أولاً، ثم الكاش (Network first, falling back to cache)
+            // هذه أفضل استراتيجية لضمان عمل الصفحة أوفلاين بعد أول زيارة
+            event.respondWith(
+              fetch(event.request)
+                .then((response) => {
+                  const resClone = response.clone();
+                  caches.open(CACHE_NAME).then((cache) => {
+                    cache.put(event.request, resClone);
+                  });
+                  return response;
+                })
+                .catch(() => {
+                  return caches.match(event.request);
+                })
+            );
+          });
+        `], {type: 'text/javascript'});
+
+        navigator.serviceWorker.register(URL.createObjectURL(swBlob))
+          .then(() => {
+             // بمجرد التسجيل بنجاح
+             const status = document.getElementById('statusText');
+             status.textContent = "● OFFLINE READY (v3)";
+             status.classList.add('ready');
+          })
+          .catch(err => console.error('SW Error:', err));
+      });
+    }
+  </script>
+</body>
+</html>
